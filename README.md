@@ -1,5 +1,10 @@
 # workflow-policy
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/workflow-policy-hero-dark.png">
+  <img alt="workflow-policy: workflow files pass through seven rule probes; violations are pinpointed to file and line and reported as PR annotations and SARIF." src="docs/assets/workflow-policy-hero-light.png" width="100%">
+</picture>
+
 A GitHub Action that lints `.github/workflows/*.yml` for least-privilege permissions and
 supply-chain hygiene. It fails CI with `file:line` errors that show up as annotations on the pull
 request and, through SARIF, in code scanning.
