@@ -41,13 +41,16 @@ UNTRUSTED_FIELDS = _expand(
     "event.workflow_run.head_commit.{who}.email",
     "event.workflow_run.head_commit.{who}.name",
 )
-# A whole object (`toJSON(github.event)`, `github.event.issue`) carries its untrusted fields with it.
-ANCESTORS = {f.rsplit(".", n)[0] for f in UNTRUSTED_FIELDS for n in range(1, f.count("."))} | {"github"}
 PATH = re.compile(r"(?<![\w.-])github(?:\.(?:[\w-]+|\*))*")
 
 
 def untrusted(path: str) -> bool:
-    return path in ANCESTORS or any(path == f or path.startswith(f + ".") for f in UNTRUSTED_FIELDS)
+    """True when `path` overlaps an untrusted field: the field itself, a sub-path, or an enclosing
+    object (`toJSON(github.event)`). `*` (an index or object filter) matches any segment."""
+    segments = path.split(".")
+    return any(
+        all(a == b or "*" in (a, b) for a, b in zip(segments, field.split("."))) for field in UNTRUSTED_FIELDS
+    )
 
 
 def env_name(path: str) -> str:

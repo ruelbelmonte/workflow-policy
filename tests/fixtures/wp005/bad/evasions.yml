@@ -28,3 +28,7 @@ jobs:
           gh -R octo/repo pr checkout 7 # expect: WP005
           git fetch origin "${{ github.event.pull_request.base.ref }}"
           echo "$HEADER"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.PR_SHA }} # expect: WP005
+      - run: git checkout "$GITHUB_HEAD_REF" # expect: WP005

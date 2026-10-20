@@ -9,15 +9,18 @@ from workflow_policy.config import Config
 from workflow_policy.model import (
     Finding,
     Rule,
+    Script,
     Workflow,
     action_name,
     normalize_expression,
-    text_lines,
+    script,
     value_line,
 )
 
 # Everything on the pull request except the base describes the contributor's code.
-PR_HEAD = re.compile(r"github\.head_ref|github\.event\.number|github\.event\.pull_request\.(?!base\.)|refs/pull/|\bpull/")
+PR_HEAD = re.compile(
+    r"github\.head_ref|\bgithub_head_ref\b|github\.event\.number|github\.event\.pull_request\.(?!base\.)|refs/pull/|\bpull/"
+)
 GH_CHECKOUT = re.compile(r"\bgh\b.*\bpr\s+checkout\b")
 GIT_FETCH = re.compile(r"\bgit\b.*\b(fetch|checkout|switch|pull|reset|merge|worktree)\b")
 MESSAGE = (
@@ -26,8 +29,11 @@ MESSAGE = (
 )
 
 
-def is_pr_head(text: str) -> bool:
-    return bool(PR_HEAD.search(normalize_expression(text)))
+def mentions_head(text: str, env: set[str]) -> bool:
+    norm = normalize_expression(text)
+    if PR_HEAD.search(norm):
+        return True
+    return any(re.search(rf"\$\{{?{re.escape(n)}\b|\benv\.{re.escape(n)}\b", norm) for n in env)
 
 
 def tainted_env(*scopes: object) -> set[str]:
@@ -36,16 +42,22 @@ def tainted_env(*scopes: object) -> set[str]:
         for env in scopes
         if isinstance(env, dict)
         for name, value in env.items()
-        if isinstance(value, str) and is_pr_head(value)
+        if isinstance(value, str) and mentions_head(value, set())
     }
 
 
-def logical_lines(step: CommentedMap) -> Iterator[tuple[int, str]]:
-    start, buf = 0, ""
-    for line, text in text_lines(step, "run"):
-        start, buf = (start, buf + " " + text) if buf else (line, text)
+def commands(run: Script) -> Iterator[tuple[int, str]]:
+    """Yield (offset, command) over the text the runner sees, joining `\\` continuations and `${{ }}` spans."""
+    start, pos, buf = 0, 0, ""
+    for raw in run.text.split("\n"):
+        if not buf:
+            start = pos
+        pos += len(raw) + 1
+        buf = f"{buf} {raw}" if buf else raw
         if buf.rstrip().endswith("\\"):
             buf = buf.rstrip()[:-1]
+            continue
+        if buf.count("${{") > buf.count("}}"):
             continue
         yield start, buf
         buf = ""
@@ -55,31 +67,27 @@ def logical_lines(step: CommentedMap) -> Iterator[tuple[int, str]]:
 
 def checks_out_head(text: str, env: set[str]) -> bool:
     norm = normalize_expression(text)
-    if GH_CHECKOUT.search(norm):
-        return True
-    if not GIT_FETCH.search(norm):
-        return False
-    refs_env = any(re.search(rf"\$\{{?{re.escape(n)}\b|\benv\.{re.escape(n)}\b", norm) for n in env)
-    return refs_env or bool(PR_HEAD.search(norm))
+    return bool(GH_CHECKOUT.search(norm)) or bool(GIT_FETCH.search(norm) and mentions_head(text, env))
 
 
 def check(wf: Workflow, config: Config) -> Iterator[Finding]:
     if "pull_request_target" not in wf.triggers():
         return
-    for job_id, job in wf.jobs():
+    for _, job in wf.jobs():
         steps = job.get("steps")
         for step in steps if isinstance(steps, list) else []:
             if not isinstance(step, CommentedMap):
                 continue
+            env = tainted_env(wf.data.get("env"), job.get("env"), step.get("env"))
             uses, with_ = step.get("uses"), step.get("with")
             if isinstance(uses, str) and action_name(uses) == "actions/checkout" and isinstance(with_, dict):
                 for key in ("ref", "repository"):
-                    if isinstance(with_.get(key), str) and is_pr_head(with_[key]):
+                    if isinstance(with_.get(key), str) and mentions_head(with_[key], env):
                         yield wf.finding("WP005", value_line(with_, key), MESSAGE)
-            env = tainted_env(wf.data.get("env"), job.get("env"), step.get("env"))
-            for line, text in logical_lines(step):
-                if checks_out_head(text, env):
-                    yield wf.finding("WP005", line, MESSAGE)
+            if run := script(step, "run"):
+                for offset, text in commands(run):
+                    if checks_out_head(text, env):
+                        yield wf.finding("WP005", run.line_at(offset), MESSAGE)
 
 
 RULE = Rule(
