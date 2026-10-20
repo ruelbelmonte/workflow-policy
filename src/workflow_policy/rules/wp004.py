@@ -8,7 +8,8 @@ from ruamel.yaml.comments import CommentedMap
 from workflow_policy.config import Config
 from workflow_policy.model import Finding, Rule, Workflow, value_line
 
-FULL_SHA = re.compile(r"[0-9a-fA-F]{40}")
+# Lowercase is the only canonical SHA form; anything else may resolve as a branch or tag of that name.
+FULL_SHA = re.compile(r"[0-9a-f]{40}")
 DOCKER_DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
 
 
