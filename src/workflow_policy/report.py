@@ -25,8 +25,13 @@ def annotation(f: Finding) -> str:
     return f"::error file={_property(f.path)},line={f.line},title={_property(title)}::{_data(f.message)}"
 
 
+def _one_line(value: str) -> str:
+    # Messages quote workflow text; a raw newline could start a `::command::` line in the Actions log.
+    return value.replace("\r", "\\r").replace("\n", "\\n")
+
+
 def text(f: Finding) -> str:
-    return f"{f.path}:{f.line}: {f.rule} {f.message}"
+    return _one_line(f"{f.path}:{f.line}: {f.rule} {f.message}")
 
 
 def sarif(findings: list[Finding]) -> dict:

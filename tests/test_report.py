@@ -44,3 +44,9 @@ def test_sarif_document():
 def test_empty_sarif_still_lists_rules():
     run = sarif([])["runs"][0]
     assert run["results"] == [] and len(run["tool"]["driver"]["rules"]) == len(RULES) + 1
+
+
+def test_text_cannot_smuggle_workflow_commands():
+    out = text(Finding("ci.yml", 3, "WP004", "`x@v1\n::add-mask::secret\r`"))
+    assert "\n" not in out and "\r" not in out
+    assert out.endswith(r"`x@v1\n::add-mask::secret\r`")
