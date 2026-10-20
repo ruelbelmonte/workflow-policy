@@ -7,6 +7,7 @@ from ruamel.yaml.comments import CommentedMap
 
 from workflow_policy.config import Config
 from workflow_policy.model import (
+    EXPRESSION,
     Finding,
     Rule,
     Script,
@@ -37,13 +38,12 @@ def mentions_head(text: str, env: set[str]) -> bool:
 
 
 def tainted_env(*scopes: object) -> set[str]:
-    return {
-        name.lower()
-        for env in scopes
-        if isinstance(env, dict)
-        for name, value in env.items()
-        if isinstance(value, str) and mentions_head(value, set())
-    }
+    """Env names carrying head data, followed through chains such as `B: ${{ env.A }}`."""
+    entries = [(n.lower(), v) for env in scopes if isinstance(env, dict) for n, v in env.items() if isinstance(v, str)]
+    tainted: set[str] = set()
+    while new := {name for name, value in entries if name not in tainted and mentions_head(value, tainted)}:
+        tainted |= new
+    return tainted
 
 
 def commands(run: Script) -> Iterator[tuple[int, str]]:
@@ -57,7 +57,7 @@ def commands(run: Script) -> Iterator[tuple[int, str]]:
         if buf.rstrip().endswith("\\"):
             buf = buf.rstrip()[:-1]
             continue
-        if buf.count("${{") > buf.count("}}"):
+        if "${{" in EXPRESSION.sub("", buf):
             continue
         yield start, buf
         buf = ""

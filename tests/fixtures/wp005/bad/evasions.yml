@@ -32,3 +32,7 @@ jobs:
         with:
           ref: ${{ env.PR_SHA }} # expect: WP005
       - run: git checkout "$GITHUB_HEAD_REF" # expect: WP005
+      - env:
+          FIRST: ${{ github.event.pull_request.head.sha }}
+          SECOND: ${{ env.FIRST }}
+        run: git checkout "$SECOND" # expect: WP005
