@@ -1,0 +1,14 @@
+name: nightly
+on:
+  schedule:
+    - cron: '0 3 * * *' # expect: WP007
+    - cron: "00 */6 * * 1-5" # expect: WP007
+    - cron: '0,30 * * * *' # expect: WP007
+    - cron: '0-10 4 * * *' # expect: WP007
+    - cron: '  0/15 4 * * *' # expect: WP007
+permissions: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./nightly.sh

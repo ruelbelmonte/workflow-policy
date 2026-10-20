@@ -1,0 +1,14 @@
+name: nightly
+on:
+  push:
+  schedule:
+    - cron: '17 3 * * *'
+    - cron: '30 0 * * *'
+    - cron: '*/15 * * * *'
+    - cron: '5,35 * * * *'
+permissions: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./nightly.sh
