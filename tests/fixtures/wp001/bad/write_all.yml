@@ -1,0 +1,8 @@
+name: ci
+on: [push, pull_request]
+permissions: write-all # expect: WP001
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test
