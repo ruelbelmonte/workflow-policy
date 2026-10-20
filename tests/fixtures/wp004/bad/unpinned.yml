@@ -1,0 +1,16 @@
+name: ci
+on: push
+permissions: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # expect: WP004
+      - uses: github/codeql-action/upload-sarif@main # expect: WP004
+      - uses: octo/tool@3d3c42e # expect: WP004
+      - uses: octo/no-ref # expect: WP004
+      - uses: docker://alpine:3.20 # expect: WP004
+      - uses: docker://ghcr.io/octo/image # expect: WP004
+      - uses: actions/setup-python@3d3c42e5aac5ba805825da76410c181273ba90b1
+  reusable:
+    uses: octo/workflows/.github/workflows/build.yml@v1 # expect: WP004
