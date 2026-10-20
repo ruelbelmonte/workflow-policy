@@ -160,3 +160,7 @@ def test_explicit_missing_config_is_an_error(tmp_path):
     findings = lint(repo(tmp_path), config_path=tmp_path / "nope.yml", today=TODAY)
     assert sorted(rules(findings)) == ["WP000", "WP002", "WP004"]
     assert any(f.rule == "WP000" and f.path == "nope.yml" and "not found" in f.message for f in findings)
+
+
+def test_comment_only_file_gives_defaults(tmp_path):
+    assert config(tmp_path, "# nothing configured yet\n") == (Config(), [])

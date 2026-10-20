@@ -102,7 +102,9 @@ def _ignore(entry: object, line: int, today: date, errors: _Errors) -> Ignore | 
 def load_config(path: Path, display: str, today: date) -> tuple[Config, list[Finding]]:
     if not path.is_file():
         return Config(), []
-    data = load_yaml(path, display)
+    data = load_yaml(path, display, allow_empty=True)
+    if data is None:
+        return Config(), []
     if isinstance(data, Finding):
         return Config(), [data]
     errors = _Errors(display)
