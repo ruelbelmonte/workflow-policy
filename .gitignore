@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.coverage
+coverage.xml
+.pytest_cache/
+*.sarif

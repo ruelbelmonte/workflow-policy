@@ -1,0 +1,12 @@
+[project]
+name = "workflow-policy"
+version = "1.0.0"
+description = "Lint GitHub Actions workflows for least-privilege and supply-chain hygiene"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["ruamel.yaml==0.19.1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+addopts = "--cov=workflow_policy --cov-branch --cov-report=term-missing --cov-fail-under=90"
