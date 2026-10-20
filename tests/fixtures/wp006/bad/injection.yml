@@ -18,3 +18,8 @@ jobs:
       - run: echo "${{ github.event.pages.*.page_name }}" # expect: WP006
       - run: echo "${{ github.event.pull_request.body }} ${{ github.event.review.body }}" # expect: WP006 # expect: WP006
       - run: echo "${{ github.event.workflow_run.head_branch }}" # expect: WP006
+      - run: echo "${{ github.event['issue']['body'] }}" # expect: WP006
+      - run: echo "${{ GITHUB.EVENT.ISSUE.TITLE }}" # expect: WP006
+      - run: echo "${{ format('}}{0}', github.event.issue.title) }}" # expect: WP006
+      - run: echo '${{ toJSON(github.event) }}' # expect: WP006
+      - run: echo '${{ toJSON(github) }}' # expect: WP006

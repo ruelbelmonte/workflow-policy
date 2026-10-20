@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -69,20 +70,54 @@ def value_line(node: CommentedMap, key: str) -> int:
     return node.lc.value(key)[0] + 1
 
 
-def text_lines(node: CommentedMap, key: str) -> Iterator[tuple[int, str]]:
-    """Yield (file line, text) for each line of a string value, so findings land inside `run: |` blocks."""
+@dataclass(frozen=True)
+class Script:
+    """A string value as the runner sees it (`text`), plus `view`: the same characters with folded
+    line breaks restored, so a character offset maps to the file line it came from."""
+
+    text: str
+    view: str
+    first_line: int
+
+    def line_at(self, offset: int) -> int:
+        return self.first_line + self.view.count("\n", 0, offset)
+
+    def lines(self) -> Iterator[tuple[int, str]]:
+        for offset, text in enumerate(self.view.splitlines()):
+            yield self.first_line + offset, text
+
+
+def script(node: CommentedMap, key: str) -> Script | None:
     value = node.get(key)
     if not isinstance(value, str):
-        return
-    block = isinstance(value, (LiteralScalarString, FoldedScalarString))
+        return None
+    view = value
     if isinstance(value, FoldedScalarString):
         chars = list(value)
         for pos in getattr(value, "fold_pos", []):
             chars[pos] = "\n"
-        value = "".join(chars)
-    first = value_line(node, key) + (1 if block else 0)
-    for offset, text in enumerate(value.splitlines()):
-        yield first + offset, text
+        view = "".join(chars)
+    block = isinstance(value, (LiteralScalarString, FoldedScalarString))
+    return Script(str(value), view, value_line(node, key) + (1 if block else 0))
+
+
+def text_lines(node: CommentedMap, key: str) -> Iterator[tuple[int, str]]:
+    found = script(node, key)
+    if found:
+        yield from found.lines()
+
+
+# `${{ ... }}`, skipping over '...' string literals (with '' escapes) so a literal `}}` can't end it early.
+EXPRESSION = re.compile(r"\$\{\{((?:[^'}]|'(?:[^']|'')*'|\}(?!\}))*)\}\}")
+_INDEX_NAME = re.compile(r"""\[\s*['"]([\w-]+)['"]\s*\]""")
+_INDEX_ANY = re.compile(r"\[\s*(?:\d+|\*)\s*\]")
+
+
+def normalize_expression(text: str) -> str:
+    """Lowercase (contexts are case-insensitive) and rewrite `['x']` as `.x` and `[0]` as `.*`."""
+    text = _INDEX_NAME.sub(r".\1", text.lower())
+    text = _INDEX_ANY.sub(".*", text)
+    return re.sub(r"\s*\.\s*", ".", text)
 
 
 def action_name(uses: str) -> str:
