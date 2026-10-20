@@ -1,0 +1,11 @@
+name: reusable
+on:
+  workflow_call:
+    inputs:
+      target:
+        type: string
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test

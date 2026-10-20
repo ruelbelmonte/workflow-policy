@@ -1,0 +1,12 @@
+name: ci
+on:
+  push:
+permissions:
+  contents: read
+  packages: write # expect: WP001
+  issues: write # expect: WP001
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test

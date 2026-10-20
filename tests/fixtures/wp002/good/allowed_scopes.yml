@@ -1,0 +1,24 @@
+name: release
+on: push
+permissions: {}
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      issues: write
+      security-events: write
+      checks: read
+    steps:
+      - run: ./release.sh
+  read:
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - run: make
+  none:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make

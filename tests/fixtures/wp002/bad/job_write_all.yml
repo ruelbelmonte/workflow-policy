@@ -1,0 +1,9 @@
+name: ci
+on: push
+permissions: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all # expect: WP002
+    steps:
+      - run: make

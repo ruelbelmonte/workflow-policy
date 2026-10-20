@@ -1,0 +1,53 @@
+name: Workflow Policy Lint
+description: Lint GitHub Actions workflows for least-privilege permissions and supply-chain hygiene.
+author: ruelbelmonte
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  path:
+    description: Repository root whose .github/workflows are checked.
+    default: .
+  config:
+    description: Policy file. Defaults to <path>/.github/workflow-policy.yml when it exists.
+    default: ''
+  sarif-file:
+    description: Where to write SARIF results for code scanning. Empty skips SARIF.
+    default: workflow-policy.sarif
+
+outputs:
+  sarif-file:
+    description: Path of the SARIF file, or empty when none was requested.
+    value: ${{ steps.lint.outputs.sarif-file }}
+
+runs:
+  using: composite
+  steps:
+    - id: python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: '3.12'
+        update-environment: false
+
+    - id: lint
+      shell: bash
+      env:
+        PYTHON: ${{ steps.python.outputs.python-path }}
+        ACTION_PATH: ${{ github.action_path }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_SARIF: ${{ inputs.sarif-file }}
+      run: |
+        deps="$RUNNER_TEMP/workflow-policy-deps"
+        "$PYTHON" -m pip install --quiet --disable-pip-version-check --no-deps --require-hashes \
+          --target "$deps" -r "$ACTION_PATH/requirements.txt"
+        sep=':'; [ "$RUNNER_OS" = Windows ] && sep=';'
+
+        args=(--root "$INPUT_PATH" --format github)
+        [ -n "$INPUT_CONFIG" ] && args+=(--config "$INPUT_CONFIG")
+        [ -n "$INPUT_SARIF" ] && args+=(--sarif "$INPUT_SARIF")
+        echo "sarif-file=$INPUT_SARIF" >> "$GITHUB_OUTPUT"
+
+        # -P: never import from the checked-out repository, which may be untrusted PR code.
+        PYTHONPATH="$ACTION_PATH/src$sep$deps" "$PYTHON" -P -m workflow_policy "${args[@]}"

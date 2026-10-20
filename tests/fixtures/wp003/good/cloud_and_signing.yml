@@ -1,0 +1,54 @@
+name: deploy
+on: push
+permissions: {}
+jobs:
+  aws:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+  azure:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: Azure/login@3d3c42e5aac5ba805825da76410c181273ba90b1
+  gcp:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: google-github-actions/auth@3d3c42e5aac5ba805825da76410c181273ba90b1
+  cosign:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: sigstore/cosign-installer@3d3c42e5aac5ba805825da76410c181273ba90b1
+  attest:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: read
+    steps:
+      - uses: actions/attest-build-provenance@3d3c42e5aac5ba805825da76410c181273ba90b1
+  attest-sbom:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/attest-sbom@3d3c42e5aac5ba805825da76410c181273ba90b1
+  reusable:
+    permissions:
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+  no-oidc:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: none
+    steps:
+      - run: make

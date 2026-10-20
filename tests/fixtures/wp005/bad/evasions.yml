@@ -1,0 +1,38 @@
+name: pr-target
+on:
+  pull_request_target:
+permissions: {}
+env:
+  PR_SHA: ${{ github.event.pull_request.head.sha }}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      PR_REF: ${{ github.event['pull_request']['head']['ref'] }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }} # expect: WP005
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event['pull_request']['head']['sha'] }} # expect: WP005
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ GITHUB.EVENT.PULL_REQUEST.HEAD.SHA }} # expect: WP005
+      - env:
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git -C src fetch origin "$HEAD" # expect: WP005
+          git checkout "${PR_SHA}" # expect: WP005
+          git switch "${{ env.PR_REF }}" # expect: WP005
+          gh -R octo/repo pr checkout 7 # expect: WP005
+          git fetch origin "${{ github.event.pull_request.base.ref }}"
+          echo "$HEADER"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.PR_SHA }} # expect: WP005
+      - run: git checkout "$GITHUB_HEAD_REF" # expect: WP005
+      - env:
+          FIRST: ${{ github.event.pull_request.head.sha }}
+          SECOND: ${{ env.FIRST }}
+        run: git checkout "$SECOND" # expect: WP005
