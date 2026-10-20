@@ -1,0 +1,19 @@
+name: build
+on: push
+permissions: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # expect: WP003
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: make
+  lookalike:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # expect: WP003
+    steps:
+      - uses: aws-actions/amazon-ecr-login@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: azure/login-helper@3d3c42e5aac5ba805825da76410c181273ba90b1

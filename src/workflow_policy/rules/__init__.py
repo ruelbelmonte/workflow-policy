@@ -1,4 +1,4 @@
 from workflow_policy.model import Rule
-from workflow_policy.rules import wp001, wp002
+from workflow_policy.rules import wp001, wp002, wp003
 
-RULES: dict[str, Rule] = {rule.id: rule for rule in (wp001.RULE, wp002.RULE)}
+RULES: dict[str, Rule] = {rule.id: rule for rule in (wp001.RULE, wp002.RULE, wp003.RULE)}
