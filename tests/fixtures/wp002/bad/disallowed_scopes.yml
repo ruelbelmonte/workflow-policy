@@ -1,0 +1,18 @@
+name: deploy
+on: push
+permissions: {}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write # expect: WP002
+      actions: write # expect: WP002
+    steps:
+      - run: ./deploy.sh
+  notify:
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write # expect: WP002
+    steps:
+      - run: ./notify.sh
