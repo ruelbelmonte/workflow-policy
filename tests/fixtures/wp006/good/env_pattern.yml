@@ -1,0 +1,15 @@
+name: triage
+on: issues
+permissions: {}
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.title, 'bug')
+    steps:
+      - env:
+          TITLE: ${{ github.event.issue.title }}
+        run: echo "$TITLE"
+      - run: |
+          echo "${{ github.event.issue.number }}"
+          echo "${{ github.sha }} ${{ github.event.pull_request.head.sha }}"
+          echo "${{ steps.meta.outputs.version }}"

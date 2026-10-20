@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from ruamel.yaml.comments import CommentedMap
-from ruamel.yaml.scalarstring import LiteralScalarString
+from ruamel.yaml.scalarstring import FoldedScalarString, LiteralScalarString
 
 if TYPE_CHECKING:
     from workflow_policy.config import Config
@@ -74,7 +74,13 @@ def text_lines(node: CommentedMap, key: str) -> Iterator[tuple[int, str]]:
     value = node.get(key)
     if not isinstance(value, str):
         return
-    first = value_line(node, key) + (1 if isinstance(value, LiteralScalarString) else 0)
+    block = isinstance(value, (LiteralScalarString, FoldedScalarString))
+    if isinstance(value, FoldedScalarString):
+        chars = list(value)
+        for pos in getattr(value, "fold_pos", []):
+            chars[pos] = "\n"
+        value = "".join(chars)
+    first = value_line(node, key) + (1 if block else 0)
     for offset, text in enumerate(value.splitlines()):
         yield first + offset, text
 

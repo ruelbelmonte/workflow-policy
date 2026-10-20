@@ -1,0 +1,20 @@
+name: triage
+on: [issues, issue_comment, pull_request_target, push]
+permissions: {}
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ github.event.issue.title }}" # expect: WP006
+      - run: |
+          echo start
+          echo "${{ github.event.comment.body }}" # expect: WP006
+          echo "${{ github.event.pull_request.number }}"
+          git switch "${{ github.head_ref }}" # expect: WP006
+          echo "${{ github.event.pull_request.head.ref }}" # expect: WP006
+      - run: >
+          echo "${{github.event.head_commit.message}}" # expect: WP006
+      - run: echo "${{ github.event.commits[0].author.email }}" # expect: WP006
+      - run: echo "${{ github.event.pages.*.page_name }}" # expect: WP006
+      - run: echo "${{ github.event.pull_request.body }} ${{ github.event.review.body }}" # expect: WP006 # expect: WP006
+      - run: echo "${{ github.event.workflow_run.head_branch }}" # expect: WP006
