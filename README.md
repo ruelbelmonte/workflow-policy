@@ -160,7 +160,7 @@ write-scopes: [deployments]   # added to the WP002 default allowlist
 ignore:
   - path: .github/workflows/legacy-*.yml   # glob, relative to the repository root
     rules: [WP004]                          # required: the rules this entry suppresses
-    reason: vendor action publishes no releases; tracked in #42
+    reason: "vendor action publishes no releases; tracked in #42"
     expires: 2026-12-31                     # required, YYYY-MM-DD
 ```
 
