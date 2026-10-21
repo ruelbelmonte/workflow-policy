@@ -1,5 +1,10 @@
 # workflow-policy
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/workflow-policy-hero-dark.png">
+  <img alt="workflow-policy: workflow files pass through seven rule probes; violations are pinpointed to file and line and reported as PR annotations and SARIF." src="docs/assets/workflow-policy-hero-light.png" width="100%">
+</picture>
+
 A GitHub Action that lints `.github/workflows/*.yml` for least-privilege permissions and
 supply-chain hygiene. It fails CI with `file:line` errors that show up as annotations on the pull
 request and, through SARIF, in code scanning.
@@ -155,7 +160,7 @@ write-scopes: [deployments]   # added to the WP002 default allowlist
 ignore:
   - path: .github/workflows/legacy-*.yml   # glob, relative to the repository root
     rules: [WP004]                          # required: the rules this entry suppresses
-    reason: vendor action publishes no releases; tracked in #42
+    reason: "vendor action publishes no releases; tracked in #42"
     expires: 2026-12-31                     # required, YYYY-MM-DD
 ```
 
